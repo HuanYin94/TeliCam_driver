@@ -92,7 +92,11 @@ static CAM_STRM_HANDLE	s_hStrm		= (CAM_STRM_HANDLE)NULL;		// Stream handle
 /* Functions                                                                 */
 /*****************************************************************************/
 
+// params: camID imageName imageFrame rosNodeName
+
 ros::Publisher imagePublisher;
+string msgName;
+int camID;
 
 #if defined (_WIN32)
 int _tmain(int argc, _TCHAR* argv[])
@@ -100,9 +104,12 @@ int _tmain(int argc, _TCHAR* argv[])
 int main(int argc, char **argv)
 #endif
 {
-    ros::init(argc, argv, "cam_driver");
+    ros::init(argc, argv, argv[4]);
     ros::NodeHandle n;
-    imagePublisher = n.advertise<sensor_msgs::Image>("image", 1);
+    imagePublisher = n.advertise<sensor_msgs::Image>(argv[3], 1);
+
+    msgName = argv[2];
+    camID = std::stoi(argv[1]);
 
     uint32_t  uiStatus = 0;
 
@@ -235,96 +242,95 @@ uint32_t Initialize()
     U3V_CAM_INFO	*psU3vCamInfo;
     GEV_CAM_INFO	*psGevCamInfo;
 
-    for (int i = 0; i < (int)uiNum; i++)
+    // print one camera,
+
+    memset((void*)&sCamInfo, 0, sizeof(CAM_INFO));
+    // Get information of a camera.
+    s_uiStatus = Cam_GetInformation((CAM_HANDLE)NULL, camID, &sCamInfo);
+    if (s_uiStatus != CAM_API_STS_SUCCESS)
     {
-        memset((void*)&sCamInfo, 0, sizeof(CAM_INFO));
-        // Get information of a camera.
-        s_uiStatus = Cam_GetInformation((CAM_HANDLE)NULL, i, &sCamInfo);
-        if (s_uiStatus != CAM_API_STS_SUCCESS)
-        {
-            return 5;
-        }
+        return 5;
+    }
 
-        printf("\n<Camera%d information>\n", i);
-        if (sCamInfo.eCamType == CAM_TYPE_U3V)
-            printf(" Type                               : USB3 Vision camera\n");
-        else if (sCamInfo.eCamType == CAM_TYPE_GEV)
-            printf(" Type                               : GigE Vision camera\n");
+    printf("\n<Camera%d information>\n", camID);
+    if (sCamInfo.eCamType == CAM_TYPE_U3V)
+        printf(" Type                               : USB3 Vision camera\n");
+    else if (sCamInfo.eCamType == CAM_TYPE_GEV)
+        printf(" Type                               : GigE Vision camera\n");
 
-        printf(" Manufacturer                       : %s\n", sCamInfo.szManufacturer);
-        printf(" Model name                         : %s\n", sCamInfo.szModelName);
-        printf(" Serial number                      : %s\n", sCamInfo.szSerialNumber);
-        printf(" User defined name                  : %s\n", sCamInfo.szUserDefinedName);
+    printf(" Manufacturer                       : %s\n", sCamInfo.szManufacturer);
+    printf(" Model name                         : %s\n", sCamInfo.szModelName);
+    printf(" Serial number                      : %s\n", sCamInfo.szSerialNumber);
+    printf(" User defined name                  : %s\n", sCamInfo.szUserDefinedName);
 
-        if (sCamInfo.eCamType == CAM_TYPE_U3V) {
-            psU3vCamInfo = &sCamInfo.sU3vCamInfo;
+    if (sCamInfo.eCamType == CAM_TYPE_U3V) {
+        psU3vCamInfo = &sCamInfo.sU3vCamInfo;
 
-            printf(" U3v family name                    : %s\n", psU3vCamInfo->szFamilyName);
-            printf(" U3v device version                 : %s\n", psU3vCamInfo->szDeviceVersion);
-            printf(" U3v manufacturer information       : %s\n", psU3vCamInfo->szManufacturerInfo);
-            printf(" U3v adapter vendor ID              : 0x%04X\n", psU3vCamInfo->uiAdapterVendorId);
-            printf(" U3v adapter device ID              : 0x%04X\n", psU3vCamInfo->uiAdapterDeviceId);
-            printf(" U3v Adapter default MaxPacketSize  : %d\n", psU3vCamInfo->uiAdapterDfltMaxPacketSize);
-        } else if (sCamInfo.eCamType == CAM_TYPE_GEV) {
-            psGevCamInfo = &sCamInfo.sGevCamInfo;
+        printf(" U3v family name                    : %s\n", psU3vCamInfo->szFamilyName);
+        printf(" U3v device version                 : %s\n", psU3vCamInfo->szDeviceVersion);
+        printf(" U3v manufacturer information       : %s\n", psU3vCamInfo->szManufacturerInfo);
+        printf(" U3v adapter vendor ID              : 0x%04X\n", psU3vCamInfo->uiAdapterVendorId);
+        printf(" U3v adapter device ID              : 0x%04X\n", psU3vCamInfo->uiAdapterDeviceId);
+        printf(" U3v Adapter default MaxPacketSize  : %d\n", psU3vCamInfo->uiAdapterDfltMaxPacketSize);
+    } else if (sCamInfo.eCamType == CAM_TYPE_GEV) {
+        psGevCamInfo = &sCamInfo.sGevCamInfo;
 
-            printf(" Gev display name                   : %s\n", psGevCamInfo->szDisplayName);
-            printf(" Gev MAC address                    : %02X-%02X-%02X-%02X-%02X-%02X\n",
-                psGevCamInfo->aucMACAddress[0],
-                psGevCamInfo->aucMACAddress[1],
-                psGevCamInfo->aucMACAddress[2],
-                psGevCamInfo->aucMACAddress[3],
-                psGevCamInfo->aucMACAddress[4],
-                psGevCamInfo->aucMACAddress[5]);
-            printf(" Gev support IP LLA                 : %d\n", psGevCamInfo->cSupportIP_LLA);
-            printf(" Gev support IP DHCP                : %d\n", psGevCamInfo->cSupportIP_DHCP);
-            printf(" Gev Support IP Persistent-IP       : %d\n", psGevCamInfo->cSupportIP_Persistent);
-            printf(" Gev current IP LLA                 : %d\n", psGevCamInfo->cCurrentIP_LLA);
-            printf(" Gev current IP DHCP                : %d\n", psGevCamInfo->cCurrentIP_DHCP);
-            printf(" Gev current IP Persistent-IP       : %d\n", psGevCamInfo->cCurrentIP_Persistent);
-            printf(" Gev IP Address                     : %d.%d.%d.%d\n",
-                psGevCamInfo->aucIPAddress[0],
-                psGevCamInfo->aucIPAddress[1],
-                psGevCamInfo->aucIPAddress[2],
-                psGevCamInfo->aucIPAddress[3]);
-            printf(" Gev subnet mask                    : %d.%d.%d.%d\n",
-                psGevCamInfo->aucSubnet[0],
-                psGevCamInfo->aucSubnet[1],
-                psGevCamInfo->aucSubnet[2],
-                psGevCamInfo->aucSubnet[3]);
-            printf(" Gev default gateway                : %d.%d.%d.%d\n",
-                psGevCamInfo->aucGateway[0],
-                psGevCamInfo->aucGateway[1],
-                psGevCamInfo->aucGateway[2],
-                psGevCamInfo->aucGateway[3]);
-            printf(" Gev adapter MAC address            : %02X-%02X-%02X-%02X-%02X-%02X\n",
-                psGevCamInfo->aucAdapterMACAddress[0],
-                psGevCamInfo->aucAdapterMACAddress[1],
-                psGevCamInfo->aucAdapterMACAddress[2],
-                psGevCamInfo->aucAdapterMACAddress[3],
-                psGevCamInfo->aucAdapterMACAddress[4],
-                psGevCamInfo->aucAdapterMACAddress[5]);
-            printf(" Gev adapter IP address             : %d.%d.%d.%d\n",
-                psGevCamInfo->aucAdapterIPAddress[0],
-                psGevCamInfo->aucAdapterIPAddress[1],
-                psGevCamInfo->aucAdapterIPAddress[2],
-                psGevCamInfo->aucAdapterIPAddress[3]);
-            printf(" Gev adapter subnet mask            : %d.%d.%d.%d\n",
-                psGevCamInfo->aucAdapterSubnet[0],
-                psGevCamInfo->aucAdapterSubnet[1],
-                psGevCamInfo->aucAdapterSubnet[2],
-                psGevCamInfo->aucAdapterSubnet[3]);
-            printf(" Gev adapter default gateway        : %d.%d.%d.%d\n",
-                psGevCamInfo->aucAdapterGateway[0],
-                psGevCamInfo->aucAdapterGateway[1],
-                psGevCamInfo->aucAdapterGateway[2],
-                psGevCamInfo->aucAdapterGateway[3]);
-            printf(" Gev adapter display name           : %s\n", psGevCamInfo->szAdapterDisplayName);
-        }
+        printf(" Gev display name                   : %s\n", psGevCamInfo->szDisplayName);
+        printf(" Gev MAC address                    : %02X-%02X-%02X-%02X-%02X-%02X\n",
+            psGevCamInfo->aucMACAddress[0],
+            psGevCamInfo->aucMACAddress[1],
+            psGevCamInfo->aucMACAddress[2],
+            psGevCamInfo->aucMACAddress[3],
+            psGevCamInfo->aucMACAddress[4],
+            psGevCamInfo->aucMACAddress[5]);
+        printf(" Gev support IP LLA                 : %d\n", psGevCamInfo->cSupportIP_LLA);
+        printf(" Gev support IP DHCP                : %d\n", psGevCamInfo->cSupportIP_DHCP);
+        printf(" Gev Support IP Persistent-IP       : %d\n", psGevCamInfo->cSupportIP_Persistent);
+        printf(" Gev current IP LLA                 : %d\n", psGevCamInfo->cCurrentIP_LLA);
+        printf(" Gev current IP DHCP                : %d\n", psGevCamInfo->cCurrentIP_DHCP);
+        printf(" Gev current IP Persistent-IP       : %d\n", psGevCamInfo->cCurrentIP_Persistent);
+        printf(" Gev IP Address                     : %d.%d.%d.%d\n",
+            psGevCamInfo->aucIPAddress[0],
+            psGevCamInfo->aucIPAddress[1],
+            psGevCamInfo->aucIPAddress[2],
+            psGevCamInfo->aucIPAddress[3]);
+        printf(" Gev subnet mask                    : %d.%d.%d.%d\n",
+            psGevCamInfo->aucSubnet[0],
+            psGevCamInfo->aucSubnet[1],
+            psGevCamInfo->aucSubnet[2],
+            psGevCamInfo->aucSubnet[3]);
+        printf(" Gev default gateway                : %d.%d.%d.%d\n",
+            psGevCamInfo->aucGateway[0],
+            psGevCamInfo->aucGateway[1],
+            psGevCamInfo->aucGateway[2],
+            psGevCamInfo->aucGateway[3]);
+        printf(" Gev adapter MAC address            : %02X-%02X-%02X-%02X-%02X-%02X\n",
+            psGevCamInfo->aucAdapterMACAddress[0],
+            psGevCamInfo->aucAdapterMACAddress[1],
+            psGevCamInfo->aucAdapterMACAddress[2],
+            psGevCamInfo->aucAdapterMACAddress[3],
+            psGevCamInfo->aucAdapterMACAddress[4],
+            psGevCamInfo->aucAdapterMACAddress[5]);
+        printf(" Gev adapter IP address             : %d.%d.%d.%d\n",
+            psGevCamInfo->aucAdapterIPAddress[0],
+            psGevCamInfo->aucAdapterIPAddress[1],
+            psGevCamInfo->aucAdapterIPAddress[2],
+            psGevCamInfo->aucAdapterIPAddress[3]);
+        printf(" Gev adapter subnet mask            : %d.%d.%d.%d\n",
+            psGevCamInfo->aucAdapterSubnet[0],
+            psGevCamInfo->aucAdapterSubnet[1],
+            psGevCamInfo->aucAdapterSubnet[2],
+            psGevCamInfo->aucAdapterSubnet[3]);
+        printf(" Gev adapter default gateway        : %d.%d.%d.%d\n",
+            psGevCamInfo->aucAdapterGateway[0],
+            psGevCamInfo->aucAdapterGateway[1],
+            psGevCamInfo->aucAdapterGateway[2],
+            psGevCamInfo->aucAdapterGateway[3]);
+        printf(" Gev adapter display name           : %s\n", psGevCamInfo->szAdapterDisplayName);
     }
 
     // Open camera that is detected first, in this sample code.
-    uint32_t iCamNo = 0;
+    uint32_t iCamNo = (uint32_t)camID;
     s_uiStatus = Cam_Open(iCamNo, &s_hCam);
     if (s_uiStatus != CAM_API_STS_SUCCESS)
     {
@@ -702,11 +708,11 @@ void CALLBACK CallbackImageAcquired(
 
     pImageBuf = (uint8_t*)psImageInfo->pvBuf;
 
-#if defined (_WIN32)
-        printf("Received ImageAcquired event.  Block id : %I64u\n", (uint64_t)psImageInfo->ullBlockId);
-#else
-        printf("Received ImageAcquired event.  Block id : %lld\n", (long long uint64_t)psImageInfo->ullBlockId);
-#endif
+//#if defined (_WIN32)
+//        printf("Received ImageAcquired event.  Block id : %I64u\n", (uint64_t)psImageInfo->ullBlockId);
+//#else
+//        printf("Received ImageAcquired event.  Block id : %lld\n", (long long uint64_t)psImageInfo->ullBlockId);
+//#endif
 
 //    // Display the first 8 pixel values.
 //    printf("  ImageBuffer :");
@@ -728,10 +734,13 @@ void CALLBACK CallbackImageAcquired(
 
 //    cv::imshow( "Display window", des_image );                // Show our image inside it.
 
+    ros::Time timeStamp(psImageInfo->ullTimestamp/1000000000, psImageInfo->ullTimestamp);
+
+    cout<<timeStamp.toSec()<<endl;
 
     cv_bridge::CvImage out_msg;
-    out_msg.header.stamp   = ros::Time::now(); // a little time delay
-    out_msg.header.frame_id = "camera";
+    out_msg.header.stamp   = timeStamp; // a little time delay
+    out_msg.header.frame_id = msgName;
     out_msg.header.seq = (uint32_t)psImageInfo->ullBlockId;
     out_msg.encoding = sensor_msgs::image_encodings::TYPE_8UC3; // Or whatever
     out_msg.image    = des_image; // Your cv::Mat

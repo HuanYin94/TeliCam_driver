@@ -6,7 +6,7 @@
 
 * OpenCV 2 is needed for transformation from Bayer Format to ROS message.
 
-* Then
+Then
 
 	mkdir build
     cd build

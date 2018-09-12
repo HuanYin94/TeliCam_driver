@@ -15,8 +15,8 @@ Then
 
 Multiple cameras are allowed. And change different message or node names in ros.
 
-    ./cam_driver \[camera_index(0/1/...)\] \[message_name\] \[image_frame_name\] \[ros_node_name\]
+    ./cam_driver [camera_index(0/1/...)] [message_name] [image_frame_name] [ros_node_name]
 
 Launch and rviz are not used, as references.
 
-![image](https://github.com/ZJUYH/TeliCam_driver/camera.jpg)
+![image](https://github.com/ZJUYH/TeliCam_driver/blob/master/camera.jpg)

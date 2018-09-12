@@ -2,9 +2,11 @@
 
 #### Compile
 
-Download code and install the basic linux drvier at [Toshiba](http://www.toshiba-teli.co.jp/en/products/industrial/usb/index.htm)
+* Download code and install the basic linux drvier at [Toshiba](http://www.toshiba-teli.co.jp/en/products/industrial/usb/index.htm)
 
-Then
+* OpenCV 2 is needed for transformation from Bayer Format to ROS message.
+
+* Then
 
 	mkdir build
     cd build

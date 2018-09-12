@@ -1,0 +1,8 @@
+<launch>
+
+	<node pkg="TeliCam_driver" type="cam_driver" name="cam_driver" output="screen">
+  </node>
+
+
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find TeliCam_driver)/cfg/image.rviz" output="screen"/>
+</launch>

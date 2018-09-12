@@ -1,16 +1,3 @@
-cmake_minimum_required(VERSION 2.8.3)
-project(TeliCam_driver)
-
-
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  cmake_modules
-  sensor_msgs
-  cv_bridge
-)
-
-add_definitions(-std=c++11 -O2 -g -DNDEBUG)
-
 ###############################################################################
 # Find Toshiba TeliCam
 #
@@ -64,32 +51,9 @@ set(TeliCam_INCLUDE_DIRS ${TeliCam_INCLUDE_DIR})
 set(TeliCam_LIBRARY "${TeliCamApi_LIBRARY}" "${TeliCamUtl_LIBRARY}")
 set(TeliCam_LIBRARIES ${TeliCam_LIBRARY})
 
-message(${TeliCam_INCLUDE_DIRS})
-message(${TeliCam_LIBRARY})
-message(${TeliCam_LIBRARIES})
-
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args( TeliCam
   FOUND_VAR TeliCam_FOUND
   REQUIRED_VARS TeliCamApi_LIBRARY TeliCamUtl_LIBRARY TeliCam_INCLUDE_DIR
 )
-
-include_directories(include)
-include_directories(
-  ${catkin_INCLUDE_DIRS}
-  ${EIGEN_INCLUDE_DIRS}
-  ${TeliCam_INCLUDE_DIRS}
-  ${OPENCV_INCLUDE_DIRS}
-)
-
-add_executable(cam_driver src/cam_driver.cpp)
-target_link_libraries(cam_driver
-${catkin_LIBRARIES}
-${libpointmatcher_LIBRARIES}
-${TeliCam_LIBRARIES}
-${OpenCV_LIBS}
-)
-
-
-
 

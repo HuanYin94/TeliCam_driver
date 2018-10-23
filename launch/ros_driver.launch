@@ -1,6 +1,6 @@
 <launch>
 
-	<node pkg="telicam_driver" type="cam_driver" name="cam_driver" output="screen">
+	<node pkg="telicam_driver" type="ros_driver" name="ros_driver" output="screen">
   </node>
 
 

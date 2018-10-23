@@ -82,8 +82,8 @@ include_directories(
   ${OPENCV_INCLUDE_DIRS}
 )
 
-add_executable(cam_driver src/cam_driver.cpp)
-target_link_libraries(cam_driver
+add_executable(ros_driver src/ros_driver.cpp)
+target_link_libraries(ros_driver
 ${catkin_LIBRARIES}
 ${libpointmatcher_LIBRARIES}
 ${TeliCam_LIBRARIES}

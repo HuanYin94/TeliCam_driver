@@ -11,6 +11,10 @@ find_package(catkin REQUIRED COMPONENTS
 
 add_definitions(-std=c++11 -O2 -g -DNDEBUG)
 
+catkin_package (
+#	CATKIN_DEPENDS roscpp
+)
+
 ###############################################################################
 # Find Toshiba TeliCam
 #
@@ -82,8 +86,8 @@ include_directories(
   ${OPENCV_INCLUDE_DIRS}
 )
 
-add_executable(ros_driver src/ros_driver.cpp)
-target_link_libraries(ros_driver
+add_executable(ros_cam_driver src/ros_cam_driver.cpp)
+target_link_libraries(ros_cam_driver
 ${catkin_LIBRARIES}
 ${libpointmatcher_LIBRARIES}
 ${TeliCam_LIBRARIES}

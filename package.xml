@@ -2,7 +2,7 @@
 <package>
   <name>telicam_driver</name>
   <version>0.0.1</version>
-  <description>The toshiba cameradriver package</description>
+  <description>The toshiba camera driver package</description>
 
   <maintainer email="zjuyinhuan@gmail.com">Huan Yin</maintainer>
 

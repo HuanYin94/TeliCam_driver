@@ -1,0 +1,16 @@
+<launch>
+
+	<node pkg="telicam_driver" type="ros_cam_driver" name="ros_cam_driver" output="screen">
+ 		
+		<!--param name="ros_node_name" value="teli_0"/-->
+		<param name="camera_index" value="0"/>
+		<param name="message_name" value="img_0"/>
+		<param name="image_frame_name" value="camera_0"/>
+
+		<>
+
+ 	</node>
+	
+	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find telicam_driver)/cfg/image.rviz" output="screen"/>
+
+</launch>

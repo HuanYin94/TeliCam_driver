@@ -95,8 +95,10 @@ static CAM_STRM_HANDLE	s_hStrm		= (CAM_STRM_HANDLE)NULL;		// Stream handle
 // params: camID imageName imageFrame rosNodeName
 
 ros::Publisher imagePublisher;
-string msgName;
-int camID;
+int camera_index;
+string message_name;
+string image_frame_name;
+//string ros_node_name;
 
 #if defined (_WIN32)
 int _tmain(int argc, _TCHAR* argv[])
@@ -104,12 +106,20 @@ int _tmain(int argc, _TCHAR* argv[])
 int main(int argc, char **argv)
 #endif
 {
-    ros::init(argc, argv, argv[4]);
-    ros::NodeHandle n;
-    imagePublisher = n.advertise<sensor_msgs::Image>(argv[3], 1);
+    // must be after the init?
+//    ros::param::get("ros_node_name", ros_node_name);
 
-    msgName = argv[2];
-    camID = std::stoi(argv[1]);
+    ros::init(argc, argv, "ros_cam_driver");
+
+    ros::NodeHandle n;
+
+    n.getParam("/ros_cam_driver/camera_index", camera_index);
+    n.getParam("/ros_cam_driver/message_name", message_name);
+    n.getParam("/ros_cam_driver/image_frame_name", image_frame_name);
+
+//    cout<<camera_index<<"   "<<message_name<<"   "<<image_frame_name<<"   "<<ros_node_name<<"  ssss"<<endl;
+
+    imagePublisher = n.advertise<sensor_msgs::Image>(image_frame_name, 1);
 
     uint32_t  uiStatus = 0;
 
@@ -246,13 +256,13 @@ uint32_t Initialize()
 
     memset((void*)&sCamInfo, 0, sizeof(CAM_INFO));
     // Get information of a camera.
-    s_uiStatus = Cam_GetInformation((CAM_HANDLE)NULL, camID, &sCamInfo);
+    s_uiStatus = Cam_GetInformation((CAM_HANDLE)NULL, camera_index, &sCamInfo);
     if (s_uiStatus != CAM_API_STS_SUCCESS)
     {
         return 5;
     }
 
-    printf("\n<Camera%d information>\n", camID);
+    printf("\n<Camera%d information>\n", camera_index);
     if (sCamInfo.eCamType == CAM_TYPE_U3V)
         printf(" Type                               : USB3 Vision camera\n");
     else if (sCamInfo.eCamType == CAM_TYPE_GEV)
@@ -330,7 +340,7 @@ uint32_t Initialize()
     }
 
     // Open camera that is detected first, in this sample code.
-    uint32_t iCamNo = (uint32_t)camID;
+    uint32_t iCamNo = (uint32_t)camera_index;
     s_uiStatus = Cam_Open(iCamNo, &s_hCam);
     if (s_uiStatus != CAM_API_STS_SUCCESS)
     {
@@ -736,11 +746,11 @@ void CALLBACK CallbackImageAcquired(
 
     ros::Time timeStamp(psImageInfo->ullTimestamp/1000000000, psImageInfo->ullTimestamp);
 
-    cout<<timeStamp.toSec()<<endl;
+//    cout<<timeStamp.toSec()<<endl;
 
     cv_bridge::CvImage out_msg;
     out_msg.header.stamp   = timeStamp; // a little time delay
-    out_msg.header.frame_id = msgName;
+    out_msg.header.frame_id = message_name;
     out_msg.header.seq = (uint32_t)psImageInfo->ullBlockId;
     out_msg.encoding = sensor_msgs::image_encodings::TYPE_8UC3; // Or whatever
     out_msg.image    = des_image; // Your cv::Mat

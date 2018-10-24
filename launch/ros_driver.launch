@@ -1,8 +1,0 @@
-<launch>
-
-	<node pkg="telicam_driver" type="ros_driver" name="ros_driver" output="screen">
-  </node>
-
-
-	<node pkg="rviz" type="rviz" name="rviz" args="-d $(find telicam_driver)/cfg/image.rviz" output="screen"/>
-</launch>

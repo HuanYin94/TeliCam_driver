@@ -12,7 +12,8 @@
 #include "ros/console.h"
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
-//#include <image_proc/advertisement_checker.h>
+#include <sensor_msgs/Imu.h>
+//#include "ros/"
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -92,13 +93,34 @@ static CAM_STRM_HANDLE	s_hStrm		= (CAM_STRM_HANDLE)NULL;		// Stream handle
 /* Functions                                                                 */
 /*****************************************************************************/
 
-// params: camID imageName imageFrame rosNodeName
-
 ros::Publisher imagePublisher;
+ros::Subscriber imuListener;
+
+// init index/time lists
+ros::Time imuTime;
+//int imuCnt = 1;
+//int imgCnt = 1;
+//map<int, ros::Time> timeList;
+
 int camera_index;
 string message_name;
 string image_frame_name;
 //string ros_node_name;
+
+ros::Time cameraTime;
+
+// features
+bool ifTrigger;
+int exposure_value;
+int gain_value;
+
+// listen to the time of IMU sensor
+void imuCallBack(const sensor_msgs::Imu::ConstPtr& imu)
+{
+    imuTime = imu->header.stamp;
+//    timeList.insert(make_pair(imuCnt, imuTime));
+//    imuCnt++;
+}
 
 #if defined (_WIN32)
 int _tmain(int argc, _TCHAR* argv[])
@@ -109,17 +131,25 @@ int main(int argc, char **argv)
     // must be after the init?
 //    ros::param::get("ros_node_name", ros_node_name);
 
-    ros::init(argc, argv, "ros_cam_driver");
+    ros::init(argc, argv, "ros_cam_driver_0");
 
     ros::NodeHandle n;
 
-    n.getParam("/ros_cam_driver/camera_index", camera_index);
-    n.getParam("/ros_cam_driver/message_name", message_name);
-    n.getParam("/ros_cam_driver/image_frame_name", image_frame_name);
+    n.getParam("/ros_cam_driver_0/camera_index", camera_index);
+    n.getParam("/ros_cam_driver_0/message_name", message_name);
+    n.getParam("/ros_cam_driver_0/image_frame_name", image_frame_name);
 
-//    cout<<camera_index<<"   "<<message_name<<"   "<<image_frame_name<<"   "<<ros_node_name<<"  ssss"<<endl;
 
-    imagePublisher = n.advertise<sensor_msgs::Image>(image_frame_name, 1);
+    n.getParam("/ros_cam_driver_0/exposure_value", exposure_value);
+    n.getParam("/ros_cam_driver_0/gain_value", gain_value);
+    n.getParam("/ros_cam_driver_0/ifTrigger", ifTrigger);
+
+    imagePublisher = n.advertise<sensor_msgs::Image>(message_name, 1);
+
+    imuListener = n.subscribe("/mti/sensor/imu", 100, imuCallBack);
+
+    ros::AsyncSpinner spinner(1); // Use another thread
+    spinner.start();
 
     uint32_t  uiStatus = 0;
 
@@ -175,6 +205,8 @@ int main(int argc, char **argv)
             break;
         }
 
+        // Trigger in set sfeature
+        /*
         // Set trigger mode.(freerun mode)
         uiStatus = SetTriggerMode();
         if (uiStatus != 0)
@@ -182,6 +214,7 @@ int main(int argc, char **argv)
             printf("Failed SetTriggerMode(), Location = %d, Status = 0x%08X.\n", uiStatus, s_uiStatus);
             break;
         }
+        */
 
         // Receive images.
         uiStatus = ProcessLoop();
@@ -190,6 +223,8 @@ int main(int argc, char **argv)
             printf("Failed ProcessLoop(), Location = %d, Status = 0x%08X.\n", uiStatus, s_uiStatus);
         }
     } while(0);
+
+    ros::waitForShutdown();
 
     // Close stream.
     CloseStream();
@@ -412,6 +447,8 @@ uint32_t SetFeature()
     printf("\n");
     printf("SetFeature() started!\n");
 
+    /**  uncommnt for the projetct, re-write these features    **/
+    /*
     // ExposureTime / ExposureMode.
     {
         if (s_bU3vCamera == true)
@@ -432,7 +469,7 @@ uint32_t SetFeature()
             }
         }
     }
-
+*/
     // GainAuto.
     {
         if (s_bU3vCamera == true)
@@ -461,6 +498,36 @@ uint32_t SetFeature()
             }
         }
     }
+
+
+    // add more features for cameras, ritten by yh 2018.1024
+
+    // Trigger mode
+    {
+        SetCamTriggerMode(s_hCam, ifTrigger);
+    }
+
+    // exposure
+    {
+        SetCamExposureTimeControl(s_hCam, CAM_EXPOSURE_TIME_CONTROL_MANUAL);
+        SetCamExposureTime(s_hCam, (float64_t)exposure_value);
+    }
+
+    // white balance
+    {
+        s_uiStatus = SetCamBalanceWhiteAuto(s_hCam, CAM_BALANCE_WHITE_AUTO_ONCE);
+        if (s_uiStatus != CAM_API_STS_SUCCESS)
+        {
+            cout<<"!!!!!!"<<endl;
+        }
+    }
+
+    // Gain
+    {
+        s_uiStatus= SetCamGain(s_hCam, (float64_t)gain_value);
+    }
+
+
     printf("SetFeature() successful.\n");
     return 0;
 }
@@ -718,6 +785,9 @@ void CALLBACK CallbackImageAcquired(
 
     pImageBuf = (uint8_t*)psImageInfo->pvBuf;
 
+    // now Time
+    cameraTime = imuTime;
+
 //#if defined (_WIN32)
 //        printf("Received ImageAcquired event.  Block id : %I64u\n", (uint64_t)psImageInfo->ullBlockId);
 //#else
@@ -740,24 +810,25 @@ void CALLBACK CallbackImageAcquired(
 //    cv::namedWindow( "Display window", cv::WINDOW_AUTOSIZE ); // Create a window for display.
 //    cv::waitKey(100);
 
-    cv::cvtColor(src_image, des_image, 46, 0);
+    cv::cvtColor(src_image, des_image, 48, 0);
 
 //    cv::imshow( "Display window", des_image );                // Show our image inside it.
 
-    ros::Time timeStamp(psImageInfo->ullTimestamp/1000000000, psImageInfo->ullTimestamp);
-
+//    ros::Time timeStamp(psImageInfo->ullTimestamp/1000000000, psImageInfo->ullTimestamp);
+//    ros::Time timeStamp = ros::Time::now();
 //    cout<<timeStamp.toSec()<<endl;
 
     cv_bridge::CvImage out_msg;
-    out_msg.header.stamp   = timeStamp; // a little time delay
-    out_msg.header.frame_id = message_name;
+    out_msg.header.frame_id = image_frame_name;
     out_msg.header.seq = (uint32_t)psImageInfo->ullBlockId;
     out_msg.encoding = sensor_msgs::image_encodings::TYPE_8UC3; // Or whatever
     out_msg.image    = des_image; // Your cv::Mat
+    out_msg.header.stamp   = cameraTime; // a little time delay
 
     imagePublisher.publish(out_msg.toImageMsg());
 
-//    exit(0);
+//    imgCnt++;
+
 }
 
 /////////////////////////////////////////////////////////

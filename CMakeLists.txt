@@ -86,12 +86,19 @@ include_directories(
   ${OPENCV_INCLUDE_DIRS}
 )
 
-add_executable(ros_cam_driver src/ros_cam_driver.cpp)
-target_link_libraries(ros_cam_driver
+add_executable(ros_cam_driver_0 src/ros_cam_driver_0.cpp)
+target_link_libraries(ros_cam_driver_0
 ${catkin_LIBRARIES}
 ${libpointmatcher_LIBRARIES}
 ${TeliCam_LIBRARIES}
 ${OpenCV_LIBS}
 )
 
+add_executable(ros_cam_driver_1 src/ros_cam_driver_1.cpp)
+target_link_libraries(ros_cam_driver_1
+${catkin_LIBRARIES}
+${libpointmatcher_LIBRARIES}
+${TeliCam_LIBRARIES}
+${OpenCV_LIBS}
+)
 

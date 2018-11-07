@@ -521,7 +521,8 @@ uint32_t SetFeature()
             cout<<"!!!!!!"<<endl;
         }
     }
-
+//    s_uiStatus =  SetCamBalanceRatio( s_hCam, CAM_BALANCE_RATIO_SELECTOR_RED, 100);
+//    std::cout<<"MMMMMM"<<std::endl;
     // Gain
     {
         s_uiStatus= SetCamGain(s_hCam, (float64_t)gain_value);

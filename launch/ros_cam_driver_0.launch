@@ -7,7 +7,7 @@
 		<param name="message_name" value="img_0"/>
 		<param name="image_frame_name" value="camera_0"/>
 		
-		<param name="ifTrigger" value="true"/>
+		<param name="ifTrigger" value="false"/>
 		<param name="exposure_value" value="10000"/>
 		<param name="gain_value" value="10"/>
 
